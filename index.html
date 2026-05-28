@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jund Wildfire — Probability Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a0606 0%, #3a0e0a 50%, #5a1a10 100%);
+            min-height: 100vh;
+            padding: 15px;
+            color: #1a1a1a;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #faf7f5;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(60, 10, 5, 0.55);
+            padding: 25px;
+        }
+
+        h1 {
+            color: #1a1a1a;
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 2em;
+            letter-spacing: 0.5px;
+        }
+
+        h1 .accent {
+            color: #b8331f;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b6b6b;
+            margin-bottom: 25px;
+            font-style: italic;
+            font-size: 0.95em;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 18px;
+            background: #f3ece9;
+            border-radius: 10px;
+            border-left: 4px solid #b8331f;
+        }
+
+        .section h2 {
+            color: #1a1a1a;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #4a4a4a;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .label-hint {
+            color: #8a8a8a;
+            font-weight: 400;
+            font-size: 0.85em;
+            margin-left: 6px;
+        }
+
+        select,
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #d8c8c4;
+            border-radius: 6px;
+            font-size: 15px;
+            background: #ffffff;
+            color: #1a1a1a;
+            transition: all 0.3s;
+        }
+
+        select:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #b8331f;
+            box-shadow: 0 0 0 3px rgba(184, 51, 31, 0.18);
+        }
+
+        .row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .row .input-group {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #8a1f10 0%, #c83a20 100%);
+            color: #fff5f0;
+            border: none;
+            border-radius: 8px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(138, 31, 16, 0.45);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .result-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(60, 10, 5, 0.15);
+            margin-bottom: 15px;
+        }
+
+        .result-card h3 {
+            color: #1a1a1a;
+            margin-bottom: 12px;
+            font-size: 1.2em;
+        }
+
+        .windows-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-top: 14px;
+        }
+
+        .window-card {
+            padding: 18px 12px;
+            border-radius: 10px;
+            text-align: center;
+            background: #faf3f0;
+            border: 2px solid #e8d5cf;
+            transition: all 0.2s;
+        }
+
+        .window-card .win-label {
+            font-size: 0.8em;
+            color: #6b6b6b;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .window-card .win-prob {
+            font-size: 2em;
+            font-weight: bold;
+            color: #b8331f;
+            letter-spacing: 0.5px;
+            line-height: 1.1;
+        }
+
+        .window-card .win-odds {
+            font-size: 0.85em;
+            color: #6b6b6b;
+            margin-top: 4px;
+        }
+
+        .prob-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.95em;
+        }
+
+        .prob-table th,
+        .prob-table td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ece0dc;
+        }
+
+        .prob-table th {
+            background: #8a1f10;
+            color: #fff5f0;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .prob-table tr:hover {
+            background: #faf3f0;
+        }
+
+        .prob-table td.label-col {
+            text-align: left;
+            font-weight: 500;
+            color: #4a4a4a;
+        }
+
+        .prob-table tr.totals-row {
+            background: #f3ece9;
+            font-weight: 700;
+        }
+
+        .prob-table tr.totals-row td {
+            border-bottom: none;
+            color: #1a1a1a;
+        }
+
+        .scenario-tag {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.82em;
+            font-weight: 700;
+            color: #fff5f0;
+            margin-right: 8px;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .tag-A {
+            background: #7a1208;
+        }
+
+        .tag-B {
+            background: #b8331f;
+        }
+
+        .tag-C {
+            background: #d95a1f;
+        }
+
+        .tag-D {
+            background: #e8862a;
+        }
+
+        .tag-E {
+            background: #f0b030;
+            color: #3a1a05;
+        }
+
+        .tag-F {
+            background: #f5d04a;
+            color: #3a1a05;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 320px;
+            margin-top: 20px;
+        }
+
+        .info-box {
+            background: #f3ece9;
+            padding: 14px;
+            border-radius: 8px;
+            margin-top: 12px;
+            border-left: 4px solid #b8331f;
+        }
+
+        .info-box p {
+            color: #2d2d2d;
+            line-height: 1.55;
+            font-size: 0.95em;
+        }
+
+        .info-box strong {
+            color: #1a1a1a;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #6b6b6b;
+            font-size: 0.9em;
+            border-top: 2px solid #e8d5cf;
+        }
+
+        .footer p {
+            margin-bottom: 8px;
+        }
+
+        .footer strong {
+            color: #b8331f;
+        }
+
+        .footer a {
+            color: #b8331f;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .footer a:hover {
+            color: #8a1f10;
+            text-decoration: underline;
+        }
+
+        .youtube-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f3ece9;
+            padding: 8px 16px;
+            border-radius: 6px;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        .youtube-link:hover {
+            background: #e8d5cf;
+            text-decoration: none;
+        }
+
+        .error-msg {
+            background: #f4dada;
+            color: #4a1a1a;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 12px;
+            border-left: 4px solid #8a3a3a;
+            font-size: 0.95em;
+            display: none;
+        }
+
+        .error-msg.show {
+            display: block;
+        }
+
+        input[type="number"].locked {
+            background: #ece0dc;
+            color: #4a4a4a;
+            border-color: #d8c8c4;
+            font-weight: 600;
+            cursor: not-allowed;
+        }
+
+        input[type="number"].locked:focus {
+            border-color: #d8c8c4;
+            box-shadow: none;
+        }
+
+        .field-caption {
+            color: #6b6b6b;
+            font-size: 0.85em;
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .subtitle {
+                font-size: 0.85em;
+            }
+
+            .section {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .section h2 {
+                font-size: 1.05em;
+                margin-bottom: 12px;
+            }
+
+            .row {
+                flex-direction: column;
+            }
+
+            .row .input-group {
+                min-width: 100%;
+            }
+
+            .windows-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .window-card .win-prob {
+                font-size: 1.7em;
+            }
+
+            .chart-container {
+                height: 260px;
+            }
+
+            .prob-table {
+                font-size: 0.82em;
+            }
+
+            .prob-table th,
+            .prob-table td {
+                padding: 7px 4px;
+            }
+
+            button {
+                font-size: 15px;
+                padding: 12px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                max-width: 750px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔥 <span class="accent">Jund Wildfire</span> Calculator</h1>
+        <p class="subtitle">Probability of the Turn-2 Wildfire-on-Bridge Sequence in Pauper</p>
+
+        <div class="info-box" style="margin-bottom: 25px;">
+            <p style="margin-bottom: 10px;"><strong>Purpose:</strong></p>
+            <p style="font-size: 0.9em; line-height: 1.6; margin-bottom: 15px;">
+                Compute the probability of executing the Jund Wildfire turn-two sequence
+                (bridge on T1, <em>Cleansing Wildfire</em> on the bridge on T2) for a given
+                deck composition.
+            </p>
+
+            <p style="margin-bottom: 8px;"><strong>How to use:</strong></p>
+            <p style="font-size: 0.9em; line-height: 1.6;">
+                Enter the number of bridges, non-bridge lands, and copies of <em>Cleansing
+                    Wildfire</em> in the deck. The calculator returns the probability for three
+                observation windows — opening hand, on the play, and on the draw.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>1. Deck Composition</h2>
+            <div class="row">
+                <div class="input-group">
+                    <label for="B">Bridges <span class="label-hint">(B)</span></label>
+                    <input type="number" id="B" min="0" max="60" value="8">
+                </div>
+                <div class="input-group">
+                    <label for="L">Non-bridge lands <span class="label-hint">(L) — enter untapped</span></label>
+                    <input type="number" id="L" min="0" max="60" value="12">
+                </div>
+                <div class="input-group">
+                    <label for="W">Cleansing Wildfire <span class="label-hint">(W)</span></label>
+                    <input type="number" id="W" min="0" max="60" value="4">
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-group">
+                    <label for="N">Deck size <span class="label-hint">(N)</span></label>
+                    <input type="number" id="N" min="40" max="250" value="60">
+                </div>
+                <div class="input-group">
+                    <label for="OtherDisplay">Other cards <span class="label-hint">(N − B − L − W) —
+                            computed</span></label>
+                    <input type="number" id="OtherDisplay" class="locked" value="36" readonly tabindex="-1">
+                </div>
+            </div>
+            <p class="field-caption" id="otherCaption">
+                Bridges enter tapped (so they cannot be the untapped T2 land);
+                non-bridge lands are assumed to enter untapped.
+                Other cards include everything else in the deck.
+            </p>
+        </div>
+
+        <button onclick="calculate()">Calculate Sequence Probability</button>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <div class="results" id="results">
+            <div class="result-card">
+                <h3>📊 Probability of the Wildfire Sequence</h3>
+                <p style="text-align: center; color: #6b6b6b; margin-bottom: 4px; font-size: 0.95em;">
+                    By observation window
+                </p>
+                <div class="windows-grid">
+                    <div class="window-card">
+                        <div class="win-label">Opening hand</div>
+                        <div class="win-prob" id="probOH">—</div>
+                        <div class="win-odds" id="oddsOH">—</div>
+                    </div>
+                    <div class="window-card">
+                        <div class="win-label">On the play</div>
+                        <div class="win-prob" id="probPlay">—</div>
+                        <div class="win-odds" id="oddsPlay">—</div>
+                    </div>
+                    <div class="window-card">
+                        <div class="win-label">On the draw</div>
+                        <div class="win-prob" id="probDraw">—</div>
+                        <div class="win-odds" id="oddsDraw">—</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 25px;">📈 Stacked Contributions by Scenario</h3>
+                <div class="chart-container">
+                    <canvas id="scenarioChart"></canvas>
+                </div>
+
+                <h3 style="margin-top: 25px;">📋 Scenario Breakdown</h3>
+                <div id="scenarioTable"></div>
+
+                <div class="info-box" id="infoBox" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Created by <strong>Hypergeomancer</strong></p>
+            <p style="font-size: 0.9em; margin-bottom: 12px;">
+                Based on the paper <em>"A Probabilistic Analysis of the Jund Wildfire Opening"</em>
+            </p>
+            <a href="#" target="_blank" rel="noopener noreferrer" class="youtube-link" id="videoLink">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+                Watch Video Explanation
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let scenarioChart = null;
+
+        // ===========================================
+        //  Math helpers
+        // ===========================================
+
+        function binomial(n, k) {
+            if (k < 0 || k > n || n < 0) return 0;
+            if (k === 0 || k === n) return 1;
+            if (k > n - k) k = n - k;
+            let result = 1;
+            for (let i = 1; i <= k; i++) {
+                result *= (n - i + 1) / i;
+            }
+            return result;
+        }
+
+        // Hand-weight function W(b, l, w) for the partition (B, L, W, Other)
+        //   W(b,l,w) = C(B,b) * C(L,l) * C(W,w) * C(O, 7-b-l-w)
+        // with O = N - B - L - W. Returns 0 if any binomial is invalid.
+        function handWeight(b, l, w, B, L, W, O) {
+            const rest = 7 - b - l - w;
+            if (rest < 0) return 0;
+            return binomial(B, b) * binomial(L, l) * binomial(W, w) * binomial(O, rest);
+        }
+
+        // ===========================================
+        //  Scenario probabilities
+        //
+        //  Closed-form formulas from §3.2 of the paper.
+        //  All sums are over hand configurations (b, l, w) with b+l+w <= 7
+        //  and the indicated lower-bound / equality constraints.
+        //
+        //  The residual deck after the opening 7 has size S = N - 7.
+        // ===========================================
+
+        function scenarioProbs(B, L, W, N) {
+            const O = N - B - L - W;
+            const denom = binomial(N, 7);
+            const S = N - 7;            // residual deck size
+            const S1 = S - 1;           // residual after one draw
+
+            // Accumulators
+            let A = 0;
+            let sumB1 = 0;   // hands with b>=1, l=0, w>=1
+            let sumB2 = 0;   // hands with b>=1, l>=1, w=0
+            let sumD = 0;    // hands with b=0, l>=1, w>=1
+            let sumE1 = 0;   // hands with b=0, l=0, w>=1
+            let sumE2 = 0;   // hands with b=0, l>=1, w=0
+            let sumF = 0;    // hands with b>=1, l=0, w=0
+
+            for (let b = 0; b <= Math.min(B, 7); b++) {
+                for (let l = 0; l <= Math.min(L, 7 - b); l++) {
+                    for (let w = 0; w <= Math.min(W, 7 - b - l); w++) {
+                        const Wt = handWeight(b, l, w, B, L, W, O);
+                        if (Wt === 0) continue;
+
+                        if (b >= 1 && l >= 1 && w >= 1) A += Wt;
+                        else if (b >= 1 && l === 0 && w >= 1) sumB1 += Wt;
+                        else if (b >= 1 && l >= 1 && w === 0) sumB2 += Wt;
+                        else if (b === 0 && l >= 1 && w >= 1) sumD += Wt;
+                        else if (b === 0 && l === 0 && w >= 1) sumE1 += Wt;
+                        else if (b === 0 && l >= 1 && w === 0) sumE2 += Wt;
+                        else if (b >= 1 && l === 0 && w === 0) sumF += Wt;
+                        // Note: hands with b=0,l=0,w=0 contribute to no success scenario.
+                    }
+                }
+            }
+
+            // Convert hand-count sums to probabilities and apply draw factors.
+            // Probabilities are returned as fractions (0..1).
+            const PA = A / denom;
+
+            // On-the-play factors (single T2 draw)
+            const PB1_play = (S > 0) ? (sumB1 / denom) * (L / S) : 0;
+            const PB2_play = (S > 0) ? (sumB2 / denom) * (W / S) : 0;
+
+            // On-the-draw factors
+            //   B-draw: missing card NOT at T1, then AT T2  =>  (S - n)/S * n/(S-1)
+            //   C:     missing card at T1                   =>  n/S
+            //   D:     bridge at T1                          =>  B/S
+            //   E:     bridge at T1, missing T2 card at T2  =>  B/S * n_T2/(S-1)
+            //   F:     two T2 cards across T1, T2 (either order) => 2 L W / (S (S-1))
+            const PB1_draw = (S > 0 && S1 > 0)
+                ? (sumB1 / denom) * ((S - L) / S) * (L / S1) : 0;
+            const PB2_draw = (S > 0 && S1 > 0)
+                ? (sumB2 / denom) * ((S - W) / S) * (W / S1) : 0;
+            const PC1 = (S > 0) ? (sumB1 / denom) * (L / S) : 0;
+            const PC2 = (S > 0) ? (sumB2 / denom) * (W / S) : 0;
+            const PD = (S > 0) ? (sumD / denom) * (B / S) : 0;
+            const PE1 = (S > 0 && S1 > 0)
+                ? (sumE1 / denom) * (B / S) * (L / S1) : 0;
+            const PE2 = (S > 0 && S1 > 0)
+                ? (sumE2 / denom) * (B / S) * (W / S1) : 0;
+            const PF = (S > 0 && S1 > 0)
+                ? (sumF / denom) * (2 * L * W) / (S * S1) : 0;
+
+            const totalOH = PA;
+            const totalPlay = PA + PB1_play + PB2_play;
+            const totalDraw = PA + PB1_draw + PB2_draw + PC1 + PC2 + PD + PE1 + PE2 + PF;
+
+            return {
+                A: PA,
+                B1_play: PB1_play, B2_play: PB2_play,
+                B1_draw: PB1_draw, B2_draw: PB2_draw,
+                C1: PC1, C2: PC2,
+                D: PD,
+                E1: PE1, E2: PE2,
+                F: PF,
+                totalOH: totalOH,
+                totalPlay: totalPlay,
+                totalDraw: totalDraw,
+            };
+        }
+
+        // ===========================================
+        //  UI
+        // ===========================================
+
+        function readInputs() {
+            return {
+                B: parseInt(document.getElementById('B').value),
+                L: parseInt(document.getElementById('L').value),
+                W: parseInt(document.getElementById('W').value),
+                N: parseInt(document.getElementById('N').value),
+            };
+        }
+
+        function updateOther() {
+            const p = readInputs();
+            const o = document.getElementById('OtherDisplay');
+            const caption = document.getElementById('otherCaption');
+            if ([p.B, p.L, p.W, p.N].some(v => isNaN(v) || v < 0)) {
+                o.value = '';
+                return;
+            }
+            const other = p.N - p.B - p.L - p.W;
+            o.value = other;
+            const valid = other >= 0;
+            o.style.color = valid ? '#4a4a4a' : '#8a3a3a';
+            o.style.borderColor = valid ? '#d8c8c4' : '#8a3a3a';
+        }
+
+        function showError(msg) {
+            const e = document.getElementById('errorMsg');
+            e.textContent = msg;
+            e.classList.add('show');
+        }
+
+        function clearError() {
+            document.getElementById('errorMsg').classList.remove('show');
+        }
+
+        function validateInputs(p) {
+            const fields = ['B', 'L', 'W', 'N'];
+            for (const f of fields) {
+                if (isNaN(p[f])) return `Field "${f}" must be a number.`;
+                if (p[f] < 0) return `Field "${f}" cannot be negative.`;
+                if (!Number.isInteger(p[f])) return `Field "${f}" must be an integer.`;
+            }
+            if (p.N < 7) return 'Deck size N must be at least 7.';
+            if (p.B + p.L + p.W > p.N) {
+                return `B + L + W = ${p.B + p.L + p.W} exceeds deck size N = ${p.N}.`;
+            }
+            if (p.B === 0 && p.L === 0 && p.W === 0) {
+                return 'At least one of B, L, W must be positive.';
+            }
+            return null;
+        }
+
+        function fmtPct(p) {
+            return (p * 100).toFixed(2) + '%';
+        }
+
+        function fmtOdds(p) {
+            if (p <= 0) return 'never';
+            if (p >= 1) return 'always';
+            const oneIn = 1 / p;
+            if (oneIn >= 100) return `1 in ${Math.round(oneIn)}`;
+            return `1 in ${oneIn.toFixed(1)}`;
+        }
+
+        // ===========================================
+        //  Main computation
+        // ===========================================
+
+        function calculate() {
+            clearError();
+            const p = readInputs();
+            const err = validateInputs(p);
+            if (err) {
+                showError(err);
+                return;
+            }
+            const r = scenarioProbs(p.B, p.L, p.W, p.N);
+            displayResults(p, r);
+        }
+
+        function displayResults(p, r) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.classList.add('show');
+
+            document.getElementById('probOH').textContent = fmtPct(r.totalOH);
+            document.getElementById('probPlay').textContent = fmtPct(r.totalPlay);
+            document.getElementById('probDraw').textContent = fmtPct(r.totalDraw);
+            document.getElementById('oddsOH').textContent = fmtOdds(r.totalOH);
+            document.getElementById('oddsPlay').textContent = fmtOdds(r.totalPlay);
+            document.getElementById('oddsDraw').textContent = fmtOdds(r.totalDraw);
+
+            renderScenarioTable(r);
+            renderScenarioChart(r);
+            renderInfoBox(p, r);
+        }
+
+        function renderScenarioTable(r) {
+            // Each row: tag, scenario, description, OH, Play, Draw
+            const rows = [
+                ['A', 'A', 'tag-A', 'Hand fully complete', r.A, r.A, r.A],
+                ['B1', 'B', 'tag-B', 'Land at T2', null, r.B1_play, r.B1_draw],
+                ['B2', 'B', 'tag-B', 'Cleansing Wildfire at T2', null, r.B2_play, r.B2_draw],
+                ['C1', 'C', 'tag-C', 'Land at T1 (on-draw only)', null, null, r.C1],
+                ['C2', 'C', 'tag-C', 'Wildfire at T1 (on-draw only)', null, null, r.C2],
+                ['D', 'D', 'tag-D', 'Bridge at T1 (on-draw only)', null, null, r.D],
+                ['E1', 'E', 'tag-E', 'Bridge T1 + land T2', null, null, r.E1],
+                ['E2', 'E', 'tag-E', 'Bridge T1 + Wildfire T2', null, null, r.E2],
+                ['F', 'F', 'tag-F', 'Both T2 cards via draws', null, null, r.F],
+            ];
+
+            const cellPct = (v) => (v === null) ? '—' : fmtPct(v);
+
+            let html = `
+                <table class="prob-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; padding-left:14px;">Scenario</th>
+                            <th>OH</th>
+                            <th>On the play</th>
+                            <th>On the draw</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            for (const [code, group, cls, desc, oh, play, draw] of rows) {
+                html += `
+                    <tr>
+                        <td class="label-col">
+                            <span class="scenario-tag ${cls}">${code}</span>
+                            ${desc}
+                        </td>
+                        <td>${cellPct(oh)}</td>
+                        <td>${cellPct(play)}</td>
+                        <td>${cellPct(draw)}</td>
+                    </tr>
+                `;
+            }
+            html += `
+                    <tr class="totals-row">
+                        <td class="label-col" style="padding-left:14px;">Total</td>
+                        <td>${fmtPct(r.totalOH)}</td>
+                        <td>${fmtPct(r.totalPlay)}</td>
+                        <td>${fmtPct(r.totalDraw)}</td>
+                    </tr>
+                </tbody>
+                </table>
+            `;
+            document.getElementById('scenarioTable').innerHTML = html;
+        }
+
+        function renderScenarioChart(r) {
+            const canvas = document.getElementById('scenarioChart');
+            const ctx = canvas.getContext('2d');
+            if (scenarioChart) {
+                scenarioChart.destroy();
+            }
+
+            const pct = (p) => +(p * 100).toFixed(3);
+
+            // Group contributions so each scenario letter is one stack segment.
+            // Palette stays in the warm red/orange/yellow family.
+            const datasets = [
+                {
+                    label: 'A — hand complete',
+                    data: [pct(r.A), pct(r.A), pct(r.A)],
+                    backgroundColor: '#7a1208',   // deep crimson
+                },
+                {
+                    label: 'B — one T2 card at T2',
+                    data: [0, pct(r.B1_play + r.B2_play), pct(r.B1_draw + r.B2_draw)],
+                    backgroundColor: '#b8331f',   // wildfire red
+                },
+                {
+                    label: 'C — one T2 card at T1 (draw only)',
+                    data: [0, 0, pct(r.C1 + r.C2)],
+                    backgroundColor: '#d95a1f',   // burnt orange
+                },
+                {
+                    label: 'D — Bridge at T1 (draw only)',
+                    data: [0, 0, pct(r.D)],
+                    backgroundColor: '#e8862a',   // orange
+                },
+                {
+                    label: 'E — Bridge T1 + T2 card at T2 (draw only)',
+                    data: [0, 0, pct(r.E1 + r.E2)],
+                    backgroundColor: '#f0b030',   // amber
+                },
+                {
+                    label: 'F — both T2 cards via draws (draw only)',
+                    data: [0, 0, pct(r.F)],
+                    backgroundColor: '#f5d04a',   // yellow
+                },
+            ];
+
+            const totals = [r.totalOH, r.totalPlay, r.totalDraw].map(pct);
+            const ymax = Math.max(5, Math.ceil(Math.max(...totals) * 1.25 / 5) * 5);
+
+            scenarioChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Opening hand', 'On the play', 'On the draw'],
+                    datasets: datasets,
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 10, font: { size: 11 } },
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) =>
+                                    `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}%`,
+                            },
+                        },
+                    },
+                    scales: {
+                        x: { stacked: true, grid: { display: false } },
+                        y: {
+                            stacked: true, beginAtZero: true, max: ymax,
+                            title: { display: true, text: 'Probability (%)' },
+                            ticks: { callback: (v) => v + '%' },
+                        },
+                    },
+                },
+            });
+
+            // Draw total labels on top of bars
+            const plugin = {
+                id: 'totalsLabel',
+                afterDatasetsDraw(chart) {
+                    const { ctx } = chart;
+                    const meta = chart.getDatasetMeta(chart.data.datasets.length - 1);
+                    ctx.save();
+                    ctx.font = 'bold 12px Segoe UI, sans-serif';
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.textAlign = 'center';
+                    for (let i = 0; i < meta.data.length; i++) {
+                        // Sum the stacked values for this bar
+                        let sum = 0;
+                        for (const ds of chart.data.datasets) sum += ds.data[i];
+                        const bar = meta.data[i];
+                        ctx.fillText(sum.toFixed(2) + '%', bar.x, bar.y - 6);
+                    }
+                    ctx.restore();
+                },
+            };
+            scenarioChart.config.plugins = [plugin];
+            scenarioChart.update();
+        }
+
+        function renderInfoBox(p, r) {
+            const onDrawGain = r.totalDraw - r.totalPlay;
+            const onDrawPct = (r.totalPlay > 0)
+                ? ` (a ${(100 * onDrawGain / r.totalPlay).toFixed(0)}% relative gain over on the play)`
+                : '';
+
+            // Identify the largest non-A contributor in the on-the-draw column
+            const draws = [
+                ['B1', r.B1_draw, 'drawing the land at T2'],
+                ['B2', r.B2_draw, 'drawing Cleansing Wildfire at T2'],
+                ['C1', r.C1, 'drawing the land at T1'],
+                ['C2', r.C2, 'drawing Cleansing Wildfire at T1'],
+                ['D', r.D, 'drawing the Bridge at T1'],
+                ['E1', r.E1, 'drawing Bridge at T1 then land at T2'],
+                ['E2', r.E2, 'drawing Bridge at T1 then Wildfire at T2'],
+                ['F', r.F, 'drawing both T2 cards via draw steps'],
+            ];
+            draws.sort((a, b) => b[1] - a[1]);
+            const top = draws[0];
+
+            document.getElementById('infoBox').innerHTML = `
+                <p><strong>Configuration.</strong>
+                    Deck of ${p.N} cards with ${p.B} bridge(s), ${p.L} non-bridge land(s),
+                    ${p.W} Cleansing Wildfire(s), and ${p.N - p.B - p.L - p.W} other card(s).
+                </p>
+                <p style="margin-top: 10px;"><strong>Summary.</strong>
+                    The opening hand alone delivers the sequence
+                    <strong>${fmtPct(r.totalOH)}</strong> of the time. The single T2 draw step
+                    on the play raises this to <strong>${fmtPct(r.totalPlay)}</strong>.
+                    The extra T1 draw on the draw raises it further to
+                    <strong>${fmtPct(r.totalDraw)}</strong>${onDrawPct}.
+                </p>
+                <p style="margin-top: 10px;"><strong>Largest single-recovery scenario on the draw.</strong>
+                    Scenario <strong>${top[0]}</strong> contributes
+                    <strong>${fmtPct(top[1])}</strong> — ${top[2]}.
+                </p>
+            `;
+        }
+
+        // Initial setup
+        document.getElementById('B').addEventListener('input', updateOther);
+        document.getElementById('L').addEventListener('input', updateOther);
+        document.getElementById('W').addEventListener('input', updateOther);
+        document.getElementById('N').addEventListener('input', updateOther);
+        updateOther();
+        calculate();  // run with defaults on load
+    </script>
+</body>
+
+</html>
